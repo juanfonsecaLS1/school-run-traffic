@@ -1,16 +1,14 @@
-# How does a traffic changes with the school run?
+---
+title: "How does a traffic changes with the school run?"
+format: gfm
+---
 
 
-``` r
+```{r}
 options(repos = c(CRAN = "https://cloud.r-project.org"))
 if (!require("remotes")) {
   install.packages("remotes")
 }
-```
-
-    Loading required package: remotes
-
-``` r
 pkgs = c(
   "sf",
   "tidyverse",
@@ -19,53 +17,11 @@ pkgs = c(
   "remotes"
 )
 remotes::install_cran(pkgs)
-```
-
-    Skipping install of 'sf' from a cran remote, the SHA1 (1.0-21) has not changed since last install.
-      Use `force = TRUE` to force installation
-
-    Skipping install of 'tidyverse' from a cran remote, the SHA1 (2.0.0) has not changed since last install.
-      Use `force = TRUE` to force installation
-
-    Skipping install of 'tmap' from a cran remote, the SHA1 (4.2) has not changed since last install.
-      Use `force = TRUE` to force installation
-
-    Skipping install of 'paletteer' from a cran remote, the SHA1 (1.6.0) has not changed since last install.
-      Use `force = TRUE` to force installation
-
-    Skipping install of 'remotes' from a cran remote, the SHA1 (2.5.0) has not changed since last install.
-      Use `force = TRUE` to force installation
-
-``` r
 sapply(pkgs, require, character.only = TRUE)
 ```
 
-    Loading required package: sf
-
-    Linking to GEOS 3.13.1, GDAL 3.10.2, PROJ 9.5.1; sf_use_s2() is TRUE
-
-    Loading required package: tidyverse
-
-    ── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-    ✔ dplyr     1.1.4     ✔ readr     2.1.5
-    ✔ forcats   1.0.1     ✔ stringr   1.5.2
-    ✔ ggplot2   4.0.0     ✔ tibble    3.3.0
-    ✔ lubridate 1.9.4     ✔ tidyr     1.3.1
-    ✔ purrr     1.1.0     
-    ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-    ✖ dplyr::filter() masks stats::filter()
-    ✖ dplyr::lag()    masks stats::lag()
-    ℹ Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
-    Loading required package: tmap
-
-    Loading required package: paletteer
-
-           sf tidyverse      tmap paletteer   remotes 
-         TRUE      TRUE      TRUE      TRUE      TRUE 
-
 Installing and loading telraamR from GitHub if not installed
-
-``` r
+```{r}
 if (!require("telraamR", quietly = T)) {
   install_github("juanfonsecaLS1/telraamR")
 }
@@ -73,14 +29,13 @@ require("telraamR")
 ```
 
 Identifying the sensor to explore
-
-``` r
+```{r}
 id <- 9000009334
 ```
 
 Downloading data
 
-``` r
+```{r}
 data <- read_telraam_traffic(id,
   time_start = "2025-08-15 07:00:00",
   time_end = "2025-09-26 07:00:00",
@@ -89,7 +44,8 @@ data <- read_telraam_traffic(id,
 )
 ```
 
-``` r
+
+```{r}
 data_long <- data |> 
     select(datetime,day,hr,car,starts_with("car speed")) |> 
     pivot_longer(cols = starts_with("car speed"),
@@ -97,8 +53,7 @@ data_long <- data |>
     values_to = "portion",names_prefix = "car speed  ") |> 
         mutate(portion = portion * 0.01) 
 ```
-
-``` r
+```{r}
 bands <- tibble(band = unique(data_long$band)) |> 
     mutate(init_value = band |>
      str_extract("(\\[?)\\d{1,3}") |>
@@ -108,7 +63,8 @@ bands <- tibble(band = unique(data_long$band)) |>
        arrange(init_value)
 ```
 
-``` r
+
+```{r}
 data_long_2 <- data_long |> 
     mutate(band = factor(band,
     levels = bands$band,ordered = TRUE),
@@ -121,9 +77,9 @@ data_long_2 <- data_long |>
          shape = day <= 5)
 ```
 
-Average speeds
+Average speeds 
 
-``` r
+```{r}
 data_long_2 |> 
   filter(abs(hr - 8)<1) |> 
   ggplot(aes(shape,mean,col = school_term))+
@@ -133,17 +89,9 @@ data_long_2 |>
   labs(x = "weekday")
 ```
 
-    Warning: Removed 1 row containing non-finite outside the scale range
-    (`stat_boxplot()`).
-
-    Warning: Removed 1 row containing missing values or values outside the scale range
-    (`geom_point()`).
-
-![](README_files/figure-commonmark/unnamed-chunk-8-1.png)
-
 Max speeds
 
-``` r
+```{r}
 data_long |> 
   filter(portion != 0) |> 
     mutate(band = factor(band,
@@ -163,4 +111,3 @@ data_long |>
   labs(x = "weekday")
 ```
 
-![](README_files/figure-commonmark/unnamed-chunk-9-1.png)
